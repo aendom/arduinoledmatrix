@@ -1,10 +1,11 @@
-// Hey! que bueno que estas viendo esto, si te interesa esto porfavor no dudes en contactarme, ya sea para ayudarme a mejorarlo o para preguntarme algo sobre esto.
-// Saludos
-// aendom@gmail.comS
+// Hey! Glad you're looking at this. If you're interested, feel free to contact me,
+// whether to help improve it or to ask anything about it.
+// Cheers
+// aendom@gmail.com
 
 var text = $('#parrafo').text()
 
-// Toogle Informacion
+// Toggle info panel
 
 $("#info a img").toggle(
        function()
