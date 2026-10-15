@@ -1,402 +1,163 @@
-/*AENDOM
+/* LED Matrix Generator by AENDOM (aendom@gmail.com) */
 
-If you're interested in any of this, please let me know,
-whether to point out a bug
-or to ask me anything
-
-aendom@gmail.com
-*/
-
-/*
-██████╗ ███████╗███████╗███████╗████████╗
-██╔══██╗██╔════╝██╔════╝██╔════╝╚══██╔══╝
-██████╔╝█████╗  ███████╗█████╗     ██║   
-██╔══██╗██╔══╝  ╚════██║██╔══╝     ██║   
-██║  ██║███████╗███████║███████╗   ██║   
-╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝   ╚═╝                                           
-*/                                        
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed,
-figure, figcaption, footer, header, hgroup,
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	font-size: 100%;
-	font: inherit;
-	vertical-align: baseline;
+:root {
+  --orange: #ff8c40;
+  --light: #f1f1f1;
+  --panel: #dfdfdf;
+  --overlay: #e0dfdf;
+  --text: #bababa;
+  --title: #999;
+  --inset: inset 0 0 40px -7px rgba(0, 0, 0, .69);
 }
-/* HTML5 display-role reset for older browsers */
-article, aside, details, figcaption, figure,
-footer, header, hgroup, menu, nav, section {
-	display: block;
-}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-	line-height: 1;
-}
-ol, ul {
-	list-style: none;
-}
-blockquote, q {
-	quotes: none;
-}
-blockquote:before, blockquote:after,
-q:before, q:after {
-	content: '';
-	content: none;
-}
-table {
-	border-collapse: collapse;
-	border-spacing: 0;
+  background: var(--light);
+  font-family: 'Roboto', sans-serif;
+  line-height: 1;
 }
 
-/*
- █████╗ ██████╗ ███████╗ █████╗ ███████╗
-██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝
-███████║██████╔╝█████╗  ███████║███████╗
-██╔══██║██╔══██╗██╔══╝  ██╔══██║╚════██║
-██║  ██║██║  ██║███████╗██║  ██║███████║
-╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝
-*/                                        
+button { font: inherit; border: 0; background: none; cursor: pointer; }
 
-html, body {
-	height:100%;
-	width: 100%;
-	background-color:#f1f1f1;
-	position: relative;
-	font-family: 'Roboto', sans-serif;
-	-webkit-transition: all 2s ease-in-out;
-	-moz-transition: all 2s ease-in-out;
-	-ms-transition: all 2s ease-in-out;
-	-o-transition: all 2s ease-in-out;
-	transition: all 2s ease-in-out;
+/* ---------- Layout: grid on the left, code on the right ---------- */
+
+.app {
+  position: relative;
+  display: flex;
+  width: 900px;
+  min-height: 590px;
+  margin: 20px auto;
+  overflow: hidden;
 }
 
-
-
-#board {
-	position: absolute;
-	left: 0;
-	right: 0;
-    height: 0px;
-    width: 940px;
-	margin: auto;
-	background-color:#f1f1f1;
-	z-index: 50;
-	-webkit-transition: all 2s ease-in-out;
-	-moz-transition: all 2s ease-in-out;
-	-ms-transition: all 2s ease-in-out;
-	-o-transition: all 2s ease-in-out;
-	transition: all 2s ease-in-out;
-	overflow: hidden;
+.editor {
+  width: 500px;
+  padding: 20px;
+  background: var(--panel);
+  box-shadow: var(--inset);
 }
 
-#infoarea {
-position: relative;
-    top: 20px;
-    left: 20px;
-    height: 590px;
-    width: 900px;
-    /* margin: auto; */
-    background-color: #E0DFDF;
-    z-index: 55;
+.card { background: var(--light); padding: 10px; }
 
+.title { padding: 0 10px 12px; }
+.title h1 { font-weight: 900; font-size: 25px; color: var(--title); padding-bottom: 8px; border-bottom: 1px solid #aaa; margin: 0 -10px 10px; padding-left: 10px; }
+.title p { font-weight: 300; font-size: 20px; color: var(--text); }
+
+/* ---------- LED grid ---------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 7px;
+  padding: 7px;
+  touch-action: none; /* allow drag-painting on touch screens */
 }
 
-#total {
-	position: relative;
-    height: 630px;
-    width: 940px;
-	margin: auto;
-	background-color:#f1f1f1;
-	overflow: hidden;
+.led {
+  aspect-ratio: 1;
+  background: #fff;
+  transition: background-color .1s;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) { .led:hover { background: #ffe1cc; } }
+.led[aria-pressed="true"] { background: var(--orange); }
+.led:focus-visible { outline: 3px solid var(--title); outline-offset: 1px; }
+
+/* ---------- Code output ---------- */
+
+.output {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  box-shadow: var(--inset);
 }
 
-#editor {
-	position: relative;
-	height:590px;
-	width: 500px;
-	top:20px;
-	left:20px;
-	background-color:#dfdfdf;
+.banner {
+  height: 110px;
+  padding-left: 80px;
+  background: url("../img/arduino.jpg") 0 0;
+  animation: scroll-banner 10s linear infinite;
+  color: #fff;
+  font-weight: 100;
+  font-size: 100px;
+  line-height: 110px;
+  text-shadow: 4px 4px 13px rgb(89, 87, 87);
+}
+@keyframes scroll-banner { to { background-position: 0 -301px; } }
 
--webkit-box-shadow: inset 0px 0px 40px -7px rgba(0,0,0,0.69);
--moz-box-shadow: inset 0px 0px 40px -7px rgba(0,0,0,0.69);
-box-shadow: inset 0px 0px 40px -7px rgba(0,0,0,0.69);
+.code {
+  padding: 24px 0 0 30px;
+  font: 100 50px/1 'Roboto', sans-serif;
+  letter-spacing: .16em;
+  color: var(--text);
 }
 
-#titulos {
-	position: relative;
-	height:50px;
-	width: 440px;
-	top:20px;
-	left:20px;
-	padding: 10px;
-	background-color:#f1f1f1;
+.actions { margin-top: auto; padding: 0 30px 20px; display: flex; gap: 20px; }
+.actions button { font-weight: 300; font-size: 18px; color: var(--text); letter-spacing: .05em; text-transform: uppercase; }
+.actions button:hover, .actions button:focus-visible { color: var(--orange); }
+
+/* ---------- About overlay ---------- */
+
+.about {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 0;
+  overflow: hidden;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  background: var(--overlay);
+  color: var(--text);
+  transition: height 1s ease-in-out;
+}
+.show-about .about { height: 100%; }
+.about p { max-width: 500px; padding: 0 20px; font-weight: 300; font-size: 30px; line-height: 1.15; }
+.credit { font-weight: 300; font-size: 20px; }
+
+.logo img {
+  display: block;
+  width: 342px;
+  max-width: 80vw;
+  opacity: .75;
+  animation: pulse 5s infinite;
+  transition: transform .2s, opacity .2s;
+}
+.logo img:hover { transform: scale(.98); opacity: 1; }
+@keyframes pulse { 25%, 75% { opacity: 1; } }
+
+/* ---------- Info button ---------- */
+
+.info-toggle {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 2;
+  width: 34px;
+  height: 34px;
+  animation: nudge 5s infinite;
+  transition: scale .2s;
+}
+.info-toggle img { width: 100%; display: block; }
+.info-toggle:hover { scale: .94; }
+.info-toggle:active { scale: .8; }
+@keyframes nudge {
+  0%, 45%, 60%, 100% { translate: 0; }
+  50% { translate: -5px; }
+  55% { translate: 5px; }
 }
 
-#circulos {
-	position: relative;
-	height:460px;
-	width: 440px;
-	top:20px;
-	left:20px;
-	padding: 10px;
-	background-color:#f1f1f1;
-}
+/* ---------- Small screens: stack the panels ---------- */
 
-#textos {
-	overflow: hidden;
-	position: absolute;
-	height: 590px;
-	width: 400px;
-	top:20px;
-	left:520px;
-	padding: 0px;
-	background-color:#fff;
-
--webkit-box-shadow: inset 0px 0px 40px -7px rgba(0,0,0,0.69);
--moz-box-shadow: inset 0px 0px 40px -7px rgba(0,0,0,0.69);
-box-shadow: inset 0px 0px 40px -7px rgba(0,0,0,0.69);
-}
-
-@keyframes posi
-{
-  0%   { 
-  		background-position: 0px 0px; 
-  		}
-
-  100% { 
-  		background-position: 0px -301px; 
-  		}
-}
-
-div#arduinob h1 {
-    color: white;
-    top: 5px;
-    position: relative;
-    left: 80px;
-    font-weight: 100;
-    font-size: 100px;
-    text-shadow: 4px 4px 13px rgb(89, 87, 87);
-}
-
-#arduinob {
-    position: absolute;
-    height: 110px;
-    width: 400px;
-	background-image: url("../img/arduino.jpg");
-	background-position: 0px 0px;
-
-	-webkit-animation: posi 10s infinite; /* Safari 4+ */
-	-moz-animation:    posi 10s infinite; /* Fx5+ */
-	-o-animation:      posi 10s infinite; /* Opera 12+ */
-	animation:         posi 10s infinite; /* IE 10+, Fx 29+ */
-	animation-timing-function: linear;
-/*	-webkit-transition: all 2s linear;
-	-moz-transition: all 2s linear;
-	-ms-transition: all 2s linear;
-	-o-transition: all 2s linear;
-	transition: all 2s linear;*/
-}
-
-#parrafo {
-	padding-top: 150px;
-    padding-left: 30px;
-}
-
-#anteparrafo {
-    position: absolute;
-    top: 480px;
-    left: 470px;
-    height: 20px;
-    width: 200px;
-    z-index: 15;
-}
-
-#infotexto {
-position: absolute;
-    top: 110px;
-    left: 210px;
-    width: 500px;
-    z-index: 15;
-    font-weight: 300;
-    font-size: 30px;
-}
-
-@keyframes hey 
-{
-  0%   { 
-  		left:870px; 
-  		}
-  45%   { 
-  		left:870px;  
-  		}
-  50%   { 
-  		left:865px;  
-  		}
-  55%   { 
-  		left:875px; 
-  		}
-  60%   { 
-  		left:870px; 
-  		}
-  100% { 
-  		left:870px; 
-  		}
-}
-
-#info {
-	position: absolute;
-	top:560px;
-	left:870px;
-	z-index: 55;
-	transform: scale(.8);
-		-webkit-transition: all .2s ease-in-out;
-	-moz-transition: all .2s ease-in-out;
-	-ms-transition: all .2s ease-in-out;
-	-o-transition: all .2s ease-in-out;
-	transition: all .2s ease-in-out;
-
-	-webkit-animation: hey 5s infinite; /* Safari 4+ */
-	-moz-animation:    hey 5s infinite; /* Fx5+ */
-	-o-animation:      hey 5s infinite; /* Opera 12+ */
-	animation:         hey 5s infinite; /* IE 10+, Fx 29+ */
-}
-
-#info:hover {
-	transform: scale(.75);
-}
-
-#info:active {
-	transform: scale(.65);
-}
-
-@keyframes heylogo 
-{
-  0%   { 
-
-  		opacity: .75;
-  		}
-  25%   { 
-
-  		opacity: 1; 
-  		}
-  50%   { 
-
-  		opacity: .75;
-  		}
-  75%   { 
-
-  		opacity: 1; 
-  		}
-  100% { 
-
-  		opacity: .75;
-  		}
-}
-
-#logo {
-	position: absolute;
-    top: 400px;
-    left: 270px;
-	z-index: 25;
-
-	-webkit-animation: heylogo 5s infinite; /* Safari 4+ */
-	-moz-animation:    heylogo 5s infinite; /* Fx5+ */
-	-o-animation:      heylogo 5s infinite; /* Opera 12+ */
-	animation:         heylogo 5s infinite; /* IE 10+, Fx 29+ */
-}
-
-#logo img {
-	height:66px;
-	width: 380px;
-	transform: scale(.9);
-	-webkit-transition: all .2s ease-in-out;
-	-moz-transition: all .2s ease-in-out;
-	-ms-transition: all .2s ease-in-out;
-	-o-transition: all .2s ease-in-out;
-	transition: all .2s ease-in-out;
-	opacity: .75;
-}
-
-#logo img:hover {
-	transform: scale(.88);
-	opacity: 1;
-}
-
-#logo img:active {
-	transform: scale(.80);
-	opacity: 1;
-}
-
-
-
-
-/*
-████████╗███████╗██╗  ██╗████████╗
-╚══██╔══╝██╔════╝╚██╗██╔╝╚══██╔══╝
-   ██║   █████╗   ╚███╔╝    ██║   
-   ██║   ██╔══╝   ██╔██╗    ██║   
-   ██║   ███████╗██╔╝ ██╗   ██║   
-   ╚═╝   ╚══════╝╚═╝  ╚═╝   ╚═╝   
-                                  
- */                                                  
-
-h1 {
-    font-weight: 900;
-    font-size: 25px;
-    color: #999;
-    padding-left: 10px;
-}
-
-h5 { 
-	font-weight: 300;
-	display: inline; 
-	font-size: 20px;
-    color: #bababa;
-    padding: 10px;
-}
-
-p  { 
-	font-weight: 100;
-	display: inline; 
-	font-size: 50px;
-    color: #bababa;
-    padding: 4px;
-}
-
-/*
-████████╗ █████╗ ██████╗ ██╗     ███████╗
-╚══██╔══╝██╔══██╗██╔══██╗██║     ██╔════╝
-   ██║   ███████║██████╔╝██║     █████╗  
-   ██║   ██╔══██║██╔══██╗██║     ██╔══╝  
-   ██║   ██║  ██║██████╔╝███████╗███████╗
-   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚══════╝╚══════╝
- */                                        
-
-table.GeneratedTable {
-width:100%;
-background-color:#FFFFFF;
-border-collapse:collapse;border-width:1px;
-border-color:#336600;
-border-style:solid;
-color:#009900;
-}
-
-table.GeneratedTable td, table.GeneratedTable th {
-border-width:7px;
-border-color:#f1f1f1;
-border-style:solid;
-width:50px;
-height: 50px;
+@media (max-width: 959px) {
+  .app { flex-direction: column; width: min(500px, 100% - 20px); min-height: 0; margin: 10px auto; }
+  .editor { width: 100%; padding: 12px; }
+  .title h1 { font-size: 22px; }
+  .banner { padding-left: 0; text-align: center; }
+  .code { padding: 20px 0 20px 20px; font-size: min(50px, 9vw); }
+  .about p { font-size: clamp(20px, 5vw, 30px); }
 }
